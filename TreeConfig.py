@@ -1,90 +1,100 @@
 import ConfigParser
+import numpy as np
 
 
-def __read_options(conf, section):
-    options = conf.options(section)
-    for option in options:
-        yield option, conf.get(section, option)
+class TreeConfig:
+    def __init__(self):
+        self.params = []
+        self.model = None
+        self.sample_path = None
+        self.label_path = None
+        self.output_dir = None
 
-
-def __read_tree_base(conf):
-    for option, val in __read_options(conf, 'TreeBase'):
-        if option == 'max_features':
-            if val == 'sqrt' or val == 'auto' or val == 'log2':
-                pass
-            elif val == 'None':
-                val = None
+    def __parse2range(self, opts):
+        param_range = []
+        for op in opts.replace(' ', '').split(','):
+            if ':' in op:
+                start, end, step = op.split(':')
+                if '.' in start or '.' in end or '.' in step:
+                    start = float(start)
+                    end = float(end)
+                    step = float(step)
+                    param_range.extend(np.arange(start, end + step, step))
+                else:
+                    start = int(start)
+                    end = int(end)
+                    step = int(step)
+                    param_range.extend(range(start, end + 1, step))
+            elif '.' in op:
+                param_range.append(float(op))
+            elif op.isdigit() or op.replace('-', '').isdigit():
+                param_range.append(int(op))
+            elif op == 'None':
+                param_range.append(None)
+            elif op == 'True':
+                param_range.append(True)
+            elif op == 'False':
+                param_range.append(False)
             else:
-                try:
-                    _ = float(val)
-                except ValueError:
-                    pass
-                val = float(val) if '.' in val else int(val)
-        elif option == 'max_depth':
-            val = None if val == 'None' else int(val)
+                param_range.append(op)
+        return param_range
+
+    def __read_options(self, conf, section):
+        options = conf.options(section)
+        for option in options:
+            yield option, conf.get(section, option)
+
+
+    def __parse_sections(self, conf, sections):
+        for section in sections:
+            for option, val in self.__read_options(conf, section):
+                val = self.__parse2range(val)
+                yield option, val
+
+
+    def conf_map(self, conf):
+        model_param = {}
+        algo = conf.get('Model', 'model')
+
+        if algo == 'RandomForestClassifier' or algo == 'ExtraTreesClassifier':
+            sections = ['TreeBase', 'ForestSpecific', 'Miscellaneous']
+        elif algo == 'GradientBoosting':
+            sections = ['TreeBase', 'GradientSpecific', 'Miscellaneous']
         else:
-            val = float(val) if '.' in val else int(val)
-        yield option, val
+            pass  # error
 
-
-def __read_forest_option(conf):
-    for option, val in __read_options(conf, 'ForestSpecific'):
-        if option == 'criterion':
-            if not (val == 'gini' or val == 'entropy'):
-                pass
-        if option == 'oob_score' or option == 'bootstrap':
-            if not (val == 'True' or val == 'true' or val == 'False' or val == 'false'):
-                pass  # error
-            else:
-                val = True if val == 'True' or val == 'true' else False
-        yield option, val
-
-
-def __read_gradient_option(conf):
-    for option, val in __read_options(conf, 'GradientSpecific'):
-        try:
-            val = float(val)
-        except ValueError:
-            pass
-        yield option, val
-
-
-def __read_misc(conf, algo):
-    for option, val in __read_options(conf, 'Miscellaneous'):
-        if algo == 'GradientBoosting' and option == 'n_jobs':
-            continue
-        else:
-            val = int(val)
-        yield option, val
-
-
-def conf_map(conf):
-    model_param = {}
-    algo = conf.get('Model', 'model')
-    for k, v in __read_tree_base(conf):
-        model_param[k] = v
-
-    if algo == 'RandomForestClassifier' or algo == 'ExtraTreesClassifier':
-        for k, v in __read_forest_option(conf):
+        for k, v in self.__parse_sections(conf, sections):
             model_param[k] = v
 
-    elif algo == 'GradientBoosting':
-        for k, v in __read_gradient_option(conf):
-            model_param[k] = v
+        # No parameter 'n_jobs' in GradientBoosting
+        if algo == 'GradientBoosting':
+            model_param.pop('n_jobs')
 
-    for k, v in __read_misc(conf, algo):
-        model_param[k] = v
-
-    else:
-        pass  # error
-
-    return algo, model_param
+        self.model = algo
+        self.params = model_param
 
 
-def read_config(filename='./conf/tree_params.ini'):
-    config = ConfigParser.ConfigParser()
-    config.read(filename)
-    return conf_map(config)
+    def __read_path(self, conf):
+        for option, v in self.__read_options(conf, 'Data'):
+            if option == 'sample_file_path':
+                self.sample_path = v
+            elif option == 'label_file_path':
+                self.label_path = v
+            elif option == 'output_directory_path':
+                self.output_dir = v
+
+
+    def read_config(self, filename='./conf/tree_params.ini'):
+        config = ConfigParser.ConfigParser()
+        config.read(filename)
+        self.conf_map(config)
+        self.__read_path(config)
+        return self
 
 if __name__ == '__main__':
-    print read_config()
+    tc = TreeConfig().read_config()
+    print tc.model
+    print tc.params
+    print tc.sample_path
+    print tc.label_path
+    print tc.output_dir
