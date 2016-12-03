@@ -44,13 +44,11 @@ class TreeConfig:
         for option in options:
             yield option, conf.get(section, option)
 
-
     def __parse_sections(self, conf, sections):
         for section in sections:
             for option, val in self.__read_options(conf, section):
                 val = self.__parse2range(val)
                 yield option, val
-
 
     def conf_map(self, conf):
         model_param = {}
@@ -73,22 +71,10 @@ class TreeConfig:
         self.model = algo
         self.params = model_param
 
-
-    def __read_path(self, conf):
-        for option, v in self.__read_options(conf, 'Data'):
-            if option == 'sample_file_path':
-                self.sample_path = v
-            elif option == 'label_file_path':
-                self.label_path = v
-            elif option == 'output_directory_path':
-                self.output_dir = v
-
-
-    def read_config(self, filename='./conf/tree_params.ini'):
+    def read_config(self, conf_file='./conf/tree_params.ini'):
         config = ConfigParser.ConfigParser()
-        config.read(filename)
+        config.read(conf_file)
         self.conf_map(config)
-        self.__read_path(config)
         return self
 
 if __name__ == '__main__':
