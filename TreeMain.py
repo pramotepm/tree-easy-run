@@ -39,13 +39,21 @@ print "Best Score: %.5f" % grid_search.best_score_
 '''
 Write a combination of parameters
 '''
-excel_count = 0
+# excel_count = 0
+# while True:
+#     excel_count += 1
+#     excel_out = os.path.join(params.out_dir, 'params_search_result_%03d.xlsx' % excel_count)
+#     if not os.path.exists(excel_out):
+#         break
+# pd.DataFrame(grid_search.cv_results_).to_excel(excel_out)
+csv_param_count = 0
 while True:
-    excel_count += 1
-    excel_out = os.path.join(params.out_dir, 'params_search_result_%03d.xlsx' % excel_count)
-    if not os.path.exists(excel_out):
+    csv_param_count += 1
+    csv_out = os.path.join(params.out_dir, 'params_search_result_%03d.csv' % csv_param_count)
+    if not os.path.exists(csv_out):
         break
-pd.DataFrame(grid_search.cv_results_).to_excel(excel_out)
+pd.DataFrame(grid_search.cv_results_).to_csv(csv_out, index=False, sep='\t')
+
 
 '''
 Write a feature importances
