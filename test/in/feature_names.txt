@@ -1,4 +1,21 @@
-sepal length (cm)
-sepal width (cm)
-petal length (cm)
-petal width (cm)
+length
+A
+R
+N
+D
+C
+Q
+E
+G
+H
+I
+L
+K
+M
+F
+P
+S
+T
+W
+Y
+V
