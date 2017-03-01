@@ -52,14 +52,15 @@ class TreeConfig:
 
     def conf_map(self, conf):
         model_param = {}
-        algo = conf.get('Model', 'model')
+        algo = conf.get('Model', 'learning_model')
 
         if algo == 'RandomForestClassifier' or algo == 'ExtraTreesClassifier':
             sections = ['TreeBase', 'ForestSpecific', 'Miscellaneous']
         elif algo == 'GradientBoosting':
             sections = ['TreeBase', 'GradientSpecific', 'Miscellaneous']
         else:
-            pass  # error
+            # TODO: send error message
+            pass
 
         for k, v in self.__parse_sections(conf, sections):
             model_param[k] = v
