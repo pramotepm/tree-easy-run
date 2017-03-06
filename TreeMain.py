@@ -30,11 +30,11 @@ else:
     k_fold_cv = StratifiedKFold(n_splits=params.n_folds, random_state=0)
 
     if model == 'GradientBoosting':
-        base_model = GradientBoostingClassifier()
+        base_model = GradientBoostingClassifier(random_state=0)
     elif model == 'RandomForestClassifier':
-        base_model = RandomForestClassifier()
+        base_model = RandomForestClassifier(random_state=0)
     elif model == 'ExtraTreesClassifier':
-        base_model = ExtraTreesClassifier()
+        base_model = ExtraTreesClassifier(random_state=0)
     grid_search = GridSearchCV(estimator=base_model,
                                param_grid=tree_params,
                                scoring='f1_micro',
